@@ -1,0 +1,147 @@
+/* ------------------------------------------------------------------
+   Streamlit Layout & Premium Background Blending
+------------------------------------------------------------------ */
+
+/* We removed the static relative URL overrides from here. 
+   main.py dynamically handles the Base64 image injection, which prevents 
+   the background image from disappearing on container reruns.
+*/
+[data-testid="stAppViewContainer"] {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed !important;
+}
+
+/* Force Streamlit's structural blocks to be transparent so our backdrop is visible */
+[data-testid="stHeader"], 
+.main, 
+[data-testid="stMainViewContainer"],
+[data-testid="stApp"] {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+body {
+    background-color: #1b202c;
+}
+
+/* ------------------------------------------------------------------
+   Flashcard Speech Bubble (Blockquote UI)
+------------------------------------------------------------------ */
+
+/* Center the blockquote in the page */
+.blockquote-wrapper {
+    display: flex;
+    padding: 0 20px;
+}
+
+/* Blockquote main style */
+.blockquote {
+    position: relative;
+    font-family: 'Barlow Condensed', sans-serif;
+    max-width: 620px;
+    max-width: 80vw;
+    margin: 40px auto;
+    align-self: center;
+}
+
+/* Blockquote header with clean white border */
+.blockquote h1 {
+    font-family: 'Cabin';
+    position: relative;
+    color: #ffffff;
+    font-size: 1.3rem;
+    font-weight: normal;
+    line-height: 1;
+    margin: 0;
+    border: 2px solid #ffffff;
+    border-radius: 20px;
+    padding: 25px;
+}
+
+/* THE FIX: This pseudo-element acts as a seamless transparent cutout.
+   By matching the exact background gradient, background-image, and using 
+   'background-attachment: fixed !important', the background inside this small mask
+   perfectly aligns with the page background behind it. This cuts a clean, 
+   invisible gap in the white border right where the tail connects,
+   making the speech bubble outline look completely continuous and hand-drawn.
+*/
+.blockquote h1:before {
+    content: "";
+    position: absolute;
+    width: 56px;
+    height: 6px;
+    bottom: -4px;
+    left: 52px;
+    z-index: 2;
+    background: linear-gradient(rgba(27, 32, 44, 0.91), rgba(27, 32, 44, 0.91)), 
+                url("app/static/identifying-and-characterizing-pfas-compounds-382099-960x540.jpg"),
+                url("identifying-and-characterizing-pfas-compounds-382099-960x540.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed !important;
+}
+
+/* Blockquote right double quotes tail - now fully white to match the main outline */
+.blockquote h1:after {
+    content: "";
+    position: absolute;
+    border: 2px solid #ffffff;
+    border-radius: 0 50px 0 0;
+    width: 60px;
+    height: 60px;
+    bottom: -60px;
+    left: 50px;
+    border-bottom: none;
+    border-left: none;
+    z-index: 3;
+}
+
+/* Increase header size on wider screens */
+@media all and (min-width: 600px) {
+    .blockquote h1 {
+        line-height: 1.2;
+    }
+}
+
+/* Decrease header size on small mobile layouts */
+@media all and (max-width: 450px) {
+    .blockquote h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Blockquote subheader */
+.blockquote h4 {
+    position: relative;
+    color: #ffffff;
+    font-size: 1.3rem;
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 0;
+    padding-top: 15px;
+    z-index: 1;
+    margin-left: 150px;
+    padding-left: 12px;
+}
+
+.blockquote h4:first-letter {
+    margin-left: -12px;
+}
+
+/* ------------------------------------------------------------------
+   Card Answer Box
+------------------------------------------------------------------ */
+.answer {
+    /* border: 3px solid #202534; */
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 1.25rem;
+    /* background-color: rgba(32, 37, 52, 0.95); */
+}
+
+.answer p {
+    font-size: 1.25rem;
+}

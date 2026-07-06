@@ -1,0 +1,78 @@
+--- OS Junk ---
+
+.DS_Store
+Thumbs.db
+._*
+
+--- Python & Environment ---
+
+pycache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+--- Virtual Environments (CRITICAL) ---
+
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+--- IDE & Editor Settings ---
+
+.idea/
+.vscode/
+.spyderproject
+.spyproject
+.ropeproject
+
+--- Notebooks & Logs ---
+
+.ipynb_checkpoints
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+--- Streamlit/Local Config (Security) ---
+
+.streamlit/
+.env
+
+--- Testing & Documentation ---
+
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+docs/_build/
+/site
