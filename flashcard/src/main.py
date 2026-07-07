@@ -1,28 +1,13 @@
 import base64
 import os
-from datetime import datetime, timedelta
-
 import pandas as pd
 import streamlit as st
 
-from utils import (
-    ANSWER,
-    DATE_ADDED,
-    DEFAULT_TAGS,
-    EXCEL_FILE,
-    ID,
-    NEXT_APPEARANCE,
-    QUESTION,
-    SYSTEM_COLUMNS,
-    TAGS,
-    concat_df,
-    get_question,
-    load_all_flashcards,
-    prepare_flashcard_df,
-    save_flashcards,
-    search,
-    view_flashcards,
-)
+from datetime import datetime, timedelta
+from src.constants import DATE_ADDED, DEFAULT_TAGS, ID, NEXT_APPEARANCE, QUESTION, ANSWER, SYSTEM_COLUMNS, TAGS
+from src.data_loader import concat_df, load_all_flashcards, prepare_flashcard_df, save_flashcards
+from src.ui_helpers import search, view_flashcards, get_question
+
 
 # -------------- App Configuration --------------
 st.set_page_config(
@@ -32,7 +17,7 @@ st.set_page_config(
 )
 
 # -------------- Background Image Injection --------------
-BACKGROUND_IMAGE_PATH = "identifying-and-characterizing-pfas-compounds-382099-960x540.jpg"
+BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "assets", "identifying-and-characterizing-pfas-compounds-382099-960x540.jpg")
 
 
 def apply_custom_background(image_path: str):

@@ -1,45 +1,31 @@
 import os
+import streamlit as st
+import pandas as pd
+
 from datetime import datetime
 from typing import Callable, List, Tuple
 
-import pandas as pd
-import streamlit as st
+from src.constants import (
+    ANSWER, 
+    DATE_ADDED, 
+    EXCEL_FILE, 
+    ID, 
+    NEXT_APPEARANCE, 
+    QUESTION, 
+    TAGS, 
+    FLASHCARDS_CSV, 
+    SYSTEM_COLUMNS
+    )
 
-FLASHCARDS_CSV = "flashcards.csv"
-EXCEL_FILE = "EPA_1633A_PFAS_Learning_Database_v1 (1).xlsx"
-
-# Standardized Core System Columns
-ID = "id"
-QUESTION = "question"
-ANSWER = "answer"
-DATE_ADDED = "date_added"
-NEXT_APPEARANCE = "next_appearance"
-TAGS = "tags"
-
-SYSTEM_COLUMNS = [ID, QUESTION, ANSWER, DATE_ADDED, NEXT_APPEARANCE, TAGS]
-N_CARDS_PER_ROW = 2
-
-DEFAULT_TAGS = [
-    "pfas",
-    "pfca",
-    "pfsa",
-    "afff",
-    "precursor",
-    "terminal",
-    "intermediate",
-    "remediation",
-    "forensics",
-    "other",
-]
-
+# =======================================================================================
 
 def get_empty_df() -> pd.DataFrame:
     """Returns an empty stateful DataFrame with correct system columns."""
-    return pd.DataFrame(
-        columns=[ID, QUESTION, ANSWER, DATE_ADDED, NEXT_APPEARANCE, TAGS, "Structure Image"]
-    )
+    from src.constants import SYSTEM_COLUMNS
+    # Adding 'Structure Image' to columns as per your original code
+    return pd.DataFrame(columns=SYSTEM_COLUMNS + ["Structure Image"])
 
-
+# @st.cache_data(ttl=3600)
 def save_flashcards(flashcards_df: pd.DataFrame):
     """Saves the stateful flashcards to local CSV safely."""
     df_to_save = flashcards_df.copy()
@@ -168,7 +154,6 @@ def map_columns_safely(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
     metadata_cols = [c for c in df_renamed.columns if c not in SYSTEM_COLUMNS]
 
     return df_renamed, metadata_cols
-
 
 def load_all_flashcards() -> pd.DataFrame:
     """
@@ -319,7 +304,13 @@ def load_all_flashcards() -> pd.DataFrame:
             save_flashcards(db_df)
             return db_df
         return get_empty_df()
-
+    
+def get_due_flashcards(df: pd.DataFrame) -> pd.DataFrame:
+    """Filters cards that are scheduled for review."""
+    if len(df) > 0:
+        due_mask = pd.to_datetime(df[NEXT_APPEARANCE]) <= datetime.now()
+        return df[due_mask]
+    return get_empty_df()
 
 def concat_df(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     """Concatenates two DataFrames while preventing duplicates and preserving typing."""
@@ -330,15 +321,6 @@ def concat_df(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     combined = pd.concat([df1, df2], ignore_index=True)
     return combined.drop_duplicates(subset=[QUESTION], keep="first")
 
-
-def get_due_flashcards(df: pd.DataFrame) -> pd.DataFrame:
-    """Filters cards that are scheduled for review."""
-    if len(df) > 0:
-        due_mask = pd.to_datetime(df[NEXT_APPEARANCE]) <= datetime.now()
-        return df[due_mask]
-    return get_empty_df()
-
-
 def prepare_flashcard_df(
     question: str,
     answer: str,
@@ -346,7 +328,7 @@ def prepare_flashcard_df(
     date_added: datetime,
     next_appearance: datetime,
     tags: list,
-) -> pd.DataFrame:
+    ) -> pd.DataFrame:
     """Creates a standardized DataFrame row for manual card additions."""
     row = {
         ID: id,
@@ -359,60 +341,7 @@ def prepare_flashcard_df(
     }
     return pd.DataFrame([row])
 
-
-def get_question(filtered_df: pd.DataFrame, force_all: bool = False):
-    """
-    Generator that yields cards in need of study.
-    If force_all is True, acts as 'Cram Mode' and yields cards regardless of date.
-    """
-    due_source = filtered_df if force_all else get_due_flashcards(filtered_df)
-    for i, row in due_source.iterrows():
-        yield i, row
-
-
-def search(text_search: str, df: pd.DataFrame) -> Callable:
-    """Constructs dynamic visual UI panels for searching cards."""
-
-    def search_df():
-        if df.empty:
-            st.warning("No cards found to search.")
-            return
-
-        search_mask = df[QUESTION].str.contains(text_search, case=False, na=False) | df[
-            ANSWER
-        ].str.contains(text_search, case=False, na=False)
-        matching_rows = df[search_mask]
-
-        if matching_rows.empty:
-            st.info(f"No results match your search term '{text_search}'.")
-            return
-
-        for n_row, (_, row) in enumerate(matching_rows.iterrows()):
-            i = n_row % N_CARDS_PER_ROW
-            if i == 0:
-                st.write("---")
-                cols = st.columns(N_CARDS_PER_ROW, gap="large")
-            with cols[i]:
-                st.caption(f"Question No. {int(row[ID])}")
-                st.markdown(f"**{row[QUESTION]}**")
-                
-                # Render Image if available in search results
-                if "Structure Image" in row and pd.notna(row["Structure Image"]) and str(row["Structure Image"]).strip() != "":
-                    st.markdown(
-                        f"""
-                        <div class="formula-image-container">
-                            <img class="formula-image" src="{str(row["Structure Image"]).strip()}" alt="Molecular Formula Structure" />
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                with st.expander("Reveal System Answer"):
-                    st.markdown(f"*{row[ANSWER]}*")
-
-    return search_df
-
-
-@st.cache_data(ttl=3600)
+# @st.cache_data(ttl=3600)
 def convert_df(df: pd.DataFrame):
     """Encodes a DataFrame into a downloadable CSV string."""
     df_copy = df.copy()
@@ -420,29 +349,4 @@ def convert_df(df: pd.DataFrame):
         df_copy[TAGS] = df_copy[TAGS].apply(
             lambda x: ",".join(x) if isinstance(x, list) else x
         )
-    return df_copy.to_csv(index=False).encode("utf-8")
-
-
-def view_flashcards(df: pd.DataFrame):
-    """Displays the interactive table of current cards."""
-    if not df.empty:
-        display_df = df.copy()
-
-        # Format list tags cleanly for tabular view
-        display_df[TAGS] = display_df[TAGS].apply(
-            lambda x: ", ".join(x) if isinstance(x, list) else x
-        )
-
-        st.dataframe(
-            display_df,
-            use_container_width=True,
-            column_order=[QUESTION, ANSWER, ID, DATE_ADDED, NEXT_APPEARANCE, TAGS],
-        )
-        st.download_button(
-            label="Download Current Deck as CSV",
-            data=convert_df(df),
-            file_name="pfas_flashcards_export.csv",
-            mime="text/csv",
-        )
-    else:
-        st.info("No records are currently matching this selection.")
+    return df_copy.to_csv(index = False).encode("utf-8")

@@ -76,3 +76,4 @@ coverage.xml
 cover/
 docs/_build/
 /site
+.venv/
