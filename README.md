@@ -12,13 +12,17 @@ An interactive learning and training tool built with Python and Streamlit design
 
 ```text
 flashcard/
-├── .streamlit/        # Streamlit configuration settings
-├── images/            # Graphic assets for visual questions
-├── main.py            # Primary application entry point
-├── utils.py           # Helper functions for data parsing and state management
-├── style.css          # Custom interface styling
-├── flashcards.csv     # Structured database of questions and answers
-└── EPA_1633A_PFAS_Learning_Database_v1 (1).xlsx # Reference dataset
+├── .streamlit/            # Streamlit configuration settings
+├── src/
+│   ├── assets/            # Graphic assets and background images
+│   ├── __init__.py        # Python package initialization
+│   ├── constants.py       # Configuration and constant values
+│   ├── data_loader.py     # Logic for parsing Excel/CSV databases
+│   ├── main.py            # Primary application entry point
+│   ├── style.css          # Custom interface styling
+│   └── ui_helpers.py      # Reusable UI components
+├── flashcards.csv         # Structured database of questions and answers
+└── EPA_1633A_PFAS_Learning_Database_v1.xlsx # Reference dataset
 ```
 
 ## 🛠️ Installation & Setup
