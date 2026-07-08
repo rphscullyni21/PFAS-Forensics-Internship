@@ -2,7 +2,7 @@
    Streamlit Layout & Premium Background Blending
 ------------------------------------------------------------------ */
 
-/* We removed the static relative URL overrides from here. 
+/* I removed the static relative URL overrides from here. 
    main.py dynamically handles the Base64 image injection, which prevents 
    the background image from disappearing on container reruns.
 */

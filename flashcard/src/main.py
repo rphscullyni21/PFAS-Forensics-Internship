@@ -161,7 +161,6 @@ with st.sidebar:
         key="filter_core_tags",
     )
 
-
 # -------------- Data Filtering Engine --------------
 filtered_df = st.session_state.flashcards_df.copy()
 
@@ -178,6 +177,7 @@ if selected_tags:
             else False
         )
     ]
+
 
 
 # -------------- Header Metrics --------------
@@ -210,25 +210,36 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ]
 )
 
+
+# Initialize session state for navigation
+if "deck_order" not in st.session_state:
+    st.session_state.deck_order = filtered_df.index.tolist()
+if "current_index" not in st.session_state:
+    st.session_state.current_index = 0
+
+
 # TAB 1: CARD PRACTICE SYSTEM
 with tab1:
     if total_deck_size == 0:
-        st.info("No chemical cards match your current sidebar filters.", icon="ℹ️")
+        st.info("No chemical cards match your current sidebar filters.")
     else:
-        try:
-            # Pull next item from generator stream
-            q_no, row = next(get_question(filtered_df, force_all=is_cram_mode))
+            # 1. Ensure the index is valid
+            if st.session_state.current_index >= len(st.session_state.deck_order):
+                st.session_state.current_index = 0
+                
+            # 2. Get the row directly from the dataframe
+            current_idx = st.session_state.deck_order[st.session_state.current_index]
+            row = filtered_df.loc[current_idx]
             
-            # Look up if a custom molecular structure image exists for this card
+            # 3. Look up if a custom molecular structure image exists for this card
             img_html = ""
             if "Structure Image" in row and pd.notna(row["Structure Image"]) and str(row["Structure Image"]).strip() != "":
                 img_data = str(row["Structure Image"]).strip()
                 img_html = f"""
-                <div class="formula-image-container">
-                    <img class="formula-image" src="{img_data}" alt="Molecular Formula Structure" />
-                </div>
-                """
-
+                    <div class="formula-image-container">
+                        <img class="formula-image" src="{img_data}" alt="Molecular Formula Structure" />
+                    </div>
+                    """
             st.markdown(
                 f"""
                 <div class="blockquote-wrapper">
@@ -241,6 +252,19 @@ with tab1:
                 """,
                 unsafe_allow_html=True,
             )
+            
+            # 4. Add the navigation controls
+            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+            with nav_col1:
+                if st.button("⬅️ Back"):
+                    if st.session_state.current_index > 0:
+                        st.session_state.current_index -= 1
+                        st.rerun()
+            with nav_col3:
+                if st.button("Next ➡️"):
+                    if st.session_state.current_index < len(st.session_state.deck_order) - 1:
+                        st.session_state.current_index += 1
+                        st.rerun()
 
             # Answer revealing wrapper
             with st.expander("Reveal Answer"):
@@ -289,12 +313,6 @@ with tab1:
                     f"Scheduled for review on: {next_appearance.strftime('%m/%d/%Y')}"
                 )
                 st.rerun()
-
-        except StopIteration:
-            st.info(
-                "You have completed all the due flashcards in this filter setting. Great job!",
-                icon="🙌",
-            )
 
 
 # TAB 2: MANUAL DATA INGESTION

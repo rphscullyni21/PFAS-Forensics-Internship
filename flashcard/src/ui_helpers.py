@@ -1,3 +1,5 @@
+import dis
+
 import streamlit as st
 import pandas as pd
 
@@ -24,6 +26,11 @@ from src.data_loader import (
 
 def view_flashcards(df: pd.DataFrame):
     """Displays the interactive table of current cards."""
+    # If the DataFrame is empty, inform the user and return early
+    if df.empty:
+        st.info("No flashcards found.")
+        return
+    # If the DataFrame is not empty, proceed to display it
     if not df.empty:
         display_df = df.copy()
 
@@ -31,18 +38,28 @@ def view_flashcards(df: pd.DataFrame):
         display_df[TAGS] = display_df[TAGS].apply(
             lambda x: ", ".join(x) if isinstance(x, list) else x
         )
+    
+        if "Structure_Image" in display_df.columns:
+            display_df = display_df.drop(columns = ["Structure_Image"])
+
+        # Find the column regardless of case
+        image_col = next((c for c in display_df.columns if c.lower() == "structure image"), None)
+        if image_col:
+            display_df = display_df.drop(columns = [image_col])
 
         st.dataframe(
             display_df,
-            width=True,
-            column_order=[QUESTION, ANSWER, ID, DATE_ADDED, NEXT_APPEARANCE, TAGS],
+            use_container_width = True,
+            column_order = [QUESTION, ANSWER, ID, DATE_ADDED, NEXT_APPEARANCE, TAGS],
         )
+
         st.download_button(
-            label="Download Current Deck as CSV",
-            data=convert_df(df),
-            file_name="pfas_flashcards_export.csv",
-            mime="text/csv",
+            label = "Download Current Deck as CSV",
+            data = convert_df(df),
+            file_name = "pfas_flashcards_export.csv",
+            mime = "text/csv",
         )
+
     else:
         st.info("No records are currently matching this selection.")
 
@@ -54,9 +71,9 @@ def search(text_search: str, df: pd.DataFrame) -> Callable:
             st.warning("No cards found to search.")
             return
 
-        search_mask = df[QUESTION].str.contains(text_search, case=False, na=False) | df[
+        search_mask = df[QUESTION].str.contains(text_search, case = False, na = False) | df[
             ANSWER
-        ].str.contains(text_search, case=False, na=False)
+        ].str.contains(text_search, case = False, na = False)
         matching_rows = df[search_mask]
 
         if matching_rows.empty:
@@ -67,7 +84,7 @@ def search(text_search: str, df: pd.DataFrame) -> Callable:
             i = n_row % N_CARDS_PER_ROW
             if i == 0:
                 st.write("---")
-                cols = st.columns(N_CARDS_PER_ROW, gap="large")
+                cols = st.columns(N_CARDS_PER_ROW, gap = "large")
             with cols[i]:
                 st.caption(f"Question No. {int(row[ID])}")
                 st.markdown(f"**{row[QUESTION]}**")
@@ -76,11 +93,11 @@ def search(text_search: str, df: pd.DataFrame) -> Callable:
                 if "Structure Image" in row and pd.notna(row["Structure Image"]) and str(row["Structure Image"]).strip() != "":
                     st.markdown(
                         f"""
-                        <div class="formula-image-container">
-                            <img class="formula-image" src="{str(row["Structure Image"]).strip()}" alt="Molecular Formula Structure" />
+                        <div class = "formula-image-container">
+                            <img class = "formula-image" src = "{str(row["Structure Image"]).strip()}" alt = "Molecular Formula Structure" />
                         </div>
                         """,
-                        unsafe_allow_html=True
+                        unsafe_allow_html = True
                     )
                 with st.expander("Reveal System Answer"):
                     st.markdown(f"*{row[ANSWER]}*")

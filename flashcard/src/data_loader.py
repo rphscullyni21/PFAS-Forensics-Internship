@@ -155,48 +155,39 @@ def map_columns_safely(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
 
     return df_renamed, metadata_cols
 
-def load_all_flashcards() -> pd.DataFrame:
-    """
-    Ingests Gerrad's Excel file (or CSV fallback) and merges it with the localized
-    practice progress (next_appearance, date_added) stored in flashcards.csv.
-    Appends custom-created flashcards that are not part of the database.
-    """
-    db_df = pd.DataFrame()
-    metadata_cols = []
+# Get the directory one level above src to ensure we can locate the Excel and CSV files correctly
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # 1. Attempt Excel Ingestion
-    if os.path.exists(EXCEL_FILE):
+def load_all_flashcards() -> pd.DataFrame:
+# Construct absolute paths
+    excel_path = os.path.join(BASE_DIR, EXCEL_FILE)
+    csv_path = os.path.join(BASE_DIR, FLASHCARDS_CSV)
+    
+    db_df = pd.DataFrame()
+
+    # 1. Attempt Excel Ingestion with the absolute path
+    if os.path.exists(excel_path):
         try:
-            excel_sheets = pd.ExcelFile(EXCEL_FILE).sheet_names
-            target_sheet = (
-                "Flashcard_Seeds" if "Flashcard_Seeds" in excel_sheets else excel_sheets[0]
-            )
-            raw_df = pd.read_excel(EXCEL_FILE, sheet_name=target_sheet)
+            excel_file_obj = pd.ExcelFile(excel_path)
+            excel_sheets = excel_file_obj.sheet_names
+            
+            # Define target_sheet safely BEFORE using it
+            target_sheet = "Flashcard_Seeds" if "Flashcard_Seeds" in excel_sheets else excel_sheets[0]
+            
+            raw_df = pd.read_excel(excel_path, sheet_name=target_sheet)
             db_df, metadata_cols = map_columns_safely(raw_df)
         except Exception as e:
             st.error(f"Failed to ingest chemical Excel database: {str(e)}")
             db_df = get_empty_df()
     else:
-        # Fallback to mapped localized seed files in directory
-        seed_csv = "EPA_1633A_PFAS_Learning_Database_v1 (1).xlsx - Flashcard_Seeds.csv"
-        master_csv = "EPA_1633A_PFAS_Learning_Database_v1 (1).xlsx - 1633_Master.csv"
-        
-        if os.path.exists(seed_csv):
-            raw_df = pd.read_csv(seed_csv)
-            db_df, metadata_cols = map_columns_safely(raw_df)
-        elif os.path.exists(master_csv):
-            raw_df = pd.read_csv(master_csv)
-            db_df, metadata_cols = map_columns_safely(raw_df)
-        elif os.path.exists("1633_Master.csv"):
-            raw_df = pd.read_csv("1633_Master.csv")
-            db_df, metadata_cols = map_columns_safely(raw_df)
+        # Debug: Tell us exactly where it looked
+        st.sidebar.error(f"Excel file not found at: {excel_path}")
+        # ... fallback logic ...
 
-    # 2. Stateful Synchronization and Progression Merging
-    if os.path.exists(FLASHCARDS_CSV):
+    # 2. Stateful Synchronization using the absolute path
+    if os.path.exists(csv_path):
         try:
-            user_df = pd.read_csv(
-                FLASHCARDS_CSV, parse_dates=[DATE_ADDED, NEXT_APPEARANCE]
-            )
+            user_df = pd.read_csv(csv_path, parse_dates=[DATE_ADDED, NEXT_APPEARANCE])
 
             # Standardize structural properties
             for col in SYSTEM_COLUMNS:
